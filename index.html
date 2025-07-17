@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Roast - Get Your Career Destroyed</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Landing Page -->
+        <div id="landing-page" class="page active">
+            <div class="content">
+                <h1>Hi, I'm an A.I. trained to evaluate career prospects.</h1>
+                <p>To get started, I'll need to see your resume.</p>
+                <p class="subtitle">I'm just gonna look at what you've done. I won't post or change anything.</p>
+                
+                <div class="upload-section">
+                    <div class="upload-area" id="upload-area">
+                        <div class="upload-icon">📄</div>
+                        <p>Upload your resume (PDF or TXT)</p>
+                        <input type="file" id="resume-upload" accept=".pdf,.txt,.doc,.docx" hidden>
+                        <button class="upload-btn" onclick="document.getElementById('resume-upload').click()">
+                            Choose File
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="question">
+                    <p>how do you know what's good?</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Page -->
+        <div id="loading-page" class="page">
+            <div class="content">
+                <div class="loading-animation">
+                    <div class="spinner"></div>
+                </div>
+                <p class="loading-text">Loading your resume...</p>
+                <p class="loading-subtext">AI analyzing your career choices...</p>
+                <p class="loading-message" id="loading-message">Analyzing your experience...</p>
+                
+                <div class="loading-reactions">
+                    <p id="reaction-1" class="reaction hidden">lol</p>
+                    <p id="reaction-2" class="reaction hidden">omg</p>
+                    <p id="reaction-3" class="reaction hidden">okay hold up 💀</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Page -->
+        <div id="results-page" class="page">
+            <div class="content">
+                <h1 id="roast-category">entry-level ambitious hopeful</h1>
+                
+                <div class="score-section">
+                    <p class="score-label">Score:</p>
+                    <p class="score" id="resume-score">42/100</p>
+                </div>
+
+                <div class="roast-section">
+                    <div class="roast-text" id="roast-text">
+                        <p>> Thank your obsessions with unpaid internships and coffee runs for that.</p>
+                        <p>> Based on your experience, I can also tell you your future is...</p>
+                        <p>> entry-level-for-life legendary bad</p>
+                        <p>> Here's what else is going on in your career trajectory:</p>
+                    </div>
+
+                    <div class="feedback-sections">
+                        <div class="feedback-section">
+                            <h3>You do these too much:</h3>
+                            <ul id="overused-skills">
+                                <li>Microsoft Office by Everyone</li>
+                                <li>Team Player by Generic Corp</li>
+                                <li>Hard Worker by Minimum Wage Inc</li>
+                            </ul>
+                        </div>
+
+                        <div class="feedback-section">
+                            <h3>You lack these skills to an uncomfortable extent:</h3>
+                            <ul id="missing-skills">
+                                <li>Programming Languages</li>
+                                <li>Industry-Specific Tools</li>
+                                <li>Leadership Experience</li>
+                                <li>Quantifiable Achievements</li>
+                            </ul>
+                        </div>
+
+                        <div class="feedback-section">
+                            <h3>Recommendations:</h3>
+                            <ul id="recommendations">
+                                <li>Learn in-demand technical skills</li>
+                                <li>Get certifications in your field</li>
+                                <li>Add quantifiable achievements</li>
+                                <li>Remove generic buzzwords</li>
+                            </ul>
+                        </div>
+
+                        <div class="feedback-section">
+                            <h3>Matching Job Opportunities:</h3>
+                            <div id="job-matches" class="job-matches">
+                                <div class="job-card">
+                                    <h4>Entry Level Developer</h4>
+                                    <p class="company">Tech Startup Inc.</p>
+                                    <p class="match-score">Match: 65%</p>
+                                    <div class="job-skills">
+                                        <span class="skill-tag">JavaScript</span>
+                                        <span class="skill-tag">React</span>
+                                        <span class="skill-tag">Node.js</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn secondary" onclick="startOver()">Roast Another Resume</button>
+                    <button class="btn primary" onclick="downloadReport()">Download Detailed Report</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
