@@ -7,8 +7,36 @@ const axios = require('axios');
 const cors = require('cors');
 require('dotenv').config();
 
-const app = express();
+// Add this check for built-in fetch
+if (!globalThis.fetch) {
+    // If no built-in fetch, use axios instead
+    globalThis.fetch = async (url, options) => {
+        try {
+            const response = await axios({
+                url,
+                method: options.method || 'GET',
+                headers: options.headers,
+                data: options.body
+            });
+            
+            return {
+                ok: response.status >= 200 && response.status < 300,
+                status: response.status,
+                statusText: response.statusText,
+                json: async () => response.data
+            };
+        } catch (error) {
+            return {
+                ok: false,
+                status: error.response?.status || 500,
+                statusText: error.response?.statusText || 'Error'
+            };
+        }
+    };
+}
+
 const PORT = process.env.PORT || 3000;
+const app = express();
 
 // Middleware
 app.use(cors());
@@ -118,20 +146,147 @@ async function analyzeResume(resumeText) {
 }
 
 // AI-powered analysis using Hugging Face
+// Resume analysis function
+async function analyzeResume(resumeText) {
+    try {
+        // Always use Hugging Face since API key is available
+        console.log('🤖 Using Hugging Face AI with your API key...');
+        return await analyzeWithAI(resumeText);
+    } catch (error) {
+        console.error('Hugging Face analysis failed, falling back to rules:', error.message);
+        return analyzeWithRules(resumeText);
+    }
+}
+
+// Enhanced Hugging Face AI analysis using your API key
 async function analyzeWithAI(resumeText) {
-    // Only use rule-based roasting for maximum reliability
-    console.log('Using rule-based roasting only (AI fallback disabled for stability).');
-    const ruleBasedAnalysis = analyzeWithRules(resumeText);
-    const roastText = [
-        '> ' + generateContextualRoast(resumeText, ruleBasedAnalysis),
-        '> Based on your experience, I can also tell you your future is...',
-        `> ${ruleBasedAnalysis.category.replace('professional', 'legendary').replace('candidate', 'hopeful')} ${ruleBasedAnalysis.score < 50 ? 'bad' : 'questionable'}`,
-        "> Here's what else is going on in your career trajectory:"
+    console.log('🔑 Using HF API Key:', process.env.HF_API_KEY ? 'Found' : 'Missing');
+    
+    // Use models that actually have free inference endpoints
+    const models = [
+        'cardiffnlp/twitter-roberta-base-sentiment-latest',
+        'facebook/bart-large-cnn',
+        'distilbert-base-uncased-finetuned-sst-2-english'
     ];
-    return {
-        ...ruleBasedAnalysis,
-        roastText
-    };
+    
+    for (const model of models) {
+        try {
+            console.log(`🤖 Trying model: ${model}`);
+            
+            const HF_API_URL = `https://api-inference.huggingface.co/models/${model}`;
+            
+            // Create analysis prompt based on model type
+            let payload;
+            if (model.includes('sentiment')) {
+                payload = { inputs: resumeText.substring(0, 500) };
+            } else if (model.includes('bart')) {
+                payload = { 
+                    inputs: resumeText.substring(0, 1000),
+                    parameters: { max_length: 100, min_length: 20 }
+                };
+            } else {
+                payload = { inputs: resumeText.substring(0, 500) };
+            }
+            
+            const response = await fetch(HF_API_URL, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${process.env.HF_API_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                console.log(`❌ Model ${model} failed: ${response.status} ${response.statusText}`);
+                continue;
+            }
+
+            const result = await response.json();
+            console.log('✅ AI Response received:', result);
+            
+            // Generate roast based on AI analysis
+            let aiRoast = generateAIBasedRoast(result, model);
+            
+            // Combine with rule-based analysis
+            const ruleBasedAnalysis = analyzeWithRules(resumeText);
+            
+            const roastText = [
+                '> ' + aiRoast,
+                '> Based on your experience, I can also tell you your future is...',
+                `> ${ruleBasedAnalysis.category} ${ruleBasedAnalysis.score < 50 ? 'bad' : 'questionable'}`,
+                "> Here's what else is going on in your career trajectory:"
+            ];
+            
+            console.log('🎉 AI analysis successful!');
+            return {
+                ...ruleBasedAnalysis,
+                roastText
+            };
+
+        } catch (modelError) {
+            console.log(`❌ Model ${model} error:`, modelError.message);
+            continue;
+        }
+    }
+    
+    // If all models fail, throw error to trigger fallback
+    throw new Error('All Hugging Face models failed');
+}
+
+// Generate roast based on AI model results
+// Generate roast based on AI model results
+function generateAIBasedRoast(result, modelType) {
+    if (modelType.includes('sentiment')) {
+        // Sentiment analysis result
+        if (result && result[0]) {
+            const sentiment = result[0].label;
+            const confidence = result[0].score;
+            
+            if (sentiment === 'NEGATIVE' && confidence > 0.7) {
+                return "Even AI thinks your resume sounds depressing - that's a new low";
+            } else if (sentiment === 'POSITIVE' && confidence > 0.8) {
+                return "Your resume is so optimistic, it's like you've never actually worked anywhere";
+            } else {
+                return "AI analyzed your resume and got confused - apparently your career path is as unclear to machines as it is to humans";
+            }
+        }
+    } else if (modelType.includes('bart')) {
+        // Summarization result - BUT CREATE ROASTS INSTEAD OF SHOWING SUMMARY
+        if (result && result[0] && result[0].summary_text) {
+            const summary = result[0].summary_text.toLowerCase();
+            
+            // Create roasts based on what the AI summary contains
+            if (summary.includes('intern') || summary.includes('entry')) {
+                return "AI tried to summarize your resume but gave up and just called you an intern";
+            } else if (summary.includes('student') || summary.includes('graduate')) {
+                return "Your resume screams 'fresh graduate with zero real experience' so loudly that even AI heard it";
+            } else if (summary.includes('experience') && summary.includes('work')) {
+                return "AI processed your work experience and concluded you've mastered the art of existing in offices";
+            } else if (summary.includes('skill') || summary.includes('technology')) {
+                return "Your technical skills impressed AI about as much as a Windows 95 computer impresses a gamer";
+            } else if (summary.includes('manage') || summary.includes('lead')) {
+                return "AI detected leadership potential, which is code for 'desperately trying to sound important'";
+            } else if (summary.includes('develop') || summary.includes('create')) {
+                return "Your development experience suggests you've successfully turned coffee into code (probably buggy code)";
+            } else {
+                return "AI tried to understand your career path but ended up more confused than a GPS in a tunnel";
+            }
+        } else {
+            return "AI attempted to analyze your resume but crashed - apparently your career is too chaotic for artificial intelligence";
+        }
+    }
+    
+    // Default roasts for other cases
+    const defaultRoasts = [
+        "Your resume shows the confidence of someone who hasn't read many job requirements",
+        "AI processed your resume and immediately requested hazard pay",
+        "Your career trajectory suggests you're playing career roulette",
+        "Even artificial intelligence is confused by your employment history",
+        "Your resume reads like a cautionary tale about career planning"
+    ];
+    
+    return defaultRoasts[Math.floor(Math.random() * defaultRoasts.length)];
 }
 
 // Generate contextual roast based on resume content
