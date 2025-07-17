@@ -1,6 +1,6 @@
 # Resume Roast 🔥
 
-A humorous web application that roasts your resume and provides constructive feedback, then matches you with job opportunities.
+A humorous web application that roasts your resume and provides constructive feedback.
 
 ## Features
 
